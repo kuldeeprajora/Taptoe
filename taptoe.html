@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Taptoe Typing Game</title>
+</head>
+<body>
+    <canvas id="backgroundCanvas"></canvas>
+    <canvas id="snowfallCanvas"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 60s</div>
+    <div id="typingSpeed">Typing Speed: 0 wpm</div>
+
+    <script>
+        const bgCanvas = document.getElementById('backgroundCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const snowCanvas = document.getElementById('snowfallCanvas');
+        const snowCtx = snowCanvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const typingSpeedDisplay = document.getElementById('typingSpeed');
+        const backgroundImage = new Image(); 
+        backgroundImage.src = 'sky.jpg'; 
+
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        snowCanvas.width = window.innerWidth;
+        snowCanvas.height = window.innerHeight;
+
+        let score = 0;
+        let time = 60;
+        let typingSpeed = 0;
+        let isRunning = true;
+
+        
+        backgroundImage.onload = function () {
+            bgCtx.drawImage(backgroundImage, 0, 0, bgCanvas.width, bgCanvas.height);
+        };
+
+        
+        const snowflakes = [];
+        const maxSnowflakes = 10; 
+
+        function createSnowflake() {
+            if (snowflakes.length < maxSnowflakes) {
+                const size = Math.random() * 20 + 10;
+                const isAlphabet = size > 15;
+                const alphabet = isAlphabet ? String.fromCharCode(65 + Math.floor(Math.random() * 26)) : null;
+
+                snowflakes.push({
+                    x: Math.random() * snowCanvas.width,
+                    y: -5,
+                    size: size,
+                    speed: Math.random() * 1 + 0.5,
+                    isAlphabet: isAlphabet,
+                    alphabet: alphabet,
+                });
+            }
+        }
+
+        function drawSnowflakes() {
+            snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+            snowCtx.fillStyle = 'white';
+            snowCtx.font = '20px Arial';
+
+            for (let i = 0; i < snowflakes.length; i++) {
+                const snowflake = snowflakes[i];
+                snowCtx.beginPath();
+                snowCtx.arc(snowflake.x, snowflake.y, snowflake.size, 0, Math.PI * 2);
+                snowCtx.closePath();
+                snowCtx.fill();
+
+                if (snowflake.isAlphabet) {
+                    snowCtx.fillStyle = 'black';
+                    snowCtx.fillText(snowflake.alphabet, snowflake.x - 8, snowflake.y + 8);
+                    snowCtx.fillStyle = 'white';
+                }
+            }
+        }
+
+       
+        function updateSnowflakes() {
+            for (let i = 0; i < snowflakes.length; i++) {
+                const snowflake = snowflakes[i];
+                snowflake.y += snowflake.speed;
+
+                if (snowflake.y > snowCanvas.height) {
+                    snowflakes.splice(i, 1);
+                    i--;
+
+                    if (snowflake.isAlphabet) {
+                        score -= 10; 
+                        scoreDisplay.textContent = 'Score: ' + score;
+                    }
+                }
+            }
+        }
+
+       
+        function calculateTypingSpeed() {
+            typingSpeed = Math.floor(score / (60 - time)) * 6;
+            typingSpeedDisplay.textContent = 'Typing Speed: ' + typingSpeed + ' wpm';
+        }
+
+        function updateTimer() {
+            if (time > 0) {
+                time--;
+                timerDisplay.textContent = 'Time: ' + time + 's';
+                calculateTypingSpeed();
+                setTimeout(updateTimer, 1000);
+            } else {
+                time = 0;
+                timerDisplay.textContent = 'Time: ' + time + 's';
+                isRunning = false;
+                calculateTypingSpeed();
+            }
+        }
+
+        updateTimer();
+
+        function animate() {
+            if (isRunning) {
+                createSnowflake();
+                drawSnowflakes();
+                updateSnowflakes();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        document.addEventListener('keydown', (event) => {
+            if (isRunning) {
+                const key = event.key.toUpperCase();
+                for (let i = 0; i < snowflakes.length; i++) {
+                    const snowflake = snowflakes[i];
+                    if (snowflake.isAlphabet && snowflake.alphabet === key) {
+                        snowflakes.splice(i, 1);
+                        i--;
+                        score += 10; 
+                        scoreDisplay.textContent = 'Score: ' + score;
+                    }
+                }
+            }
+        });
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+
+        #timer {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+
+        #typingSpeed {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+    </style>
+</body>
+</html>
